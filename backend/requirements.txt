@@ -1,0 +1,11 @@
+strawberry-graphql[debug-server]
+strawberry-sqlalchemy-mapper
+sqlalchemy
+flask-sqlalchemy
+flask[async]
+bcrypt
+pytest
+pytest-asyncio
+pytest-subtests
+pytest-coverage
+gunicorn
