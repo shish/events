@@ -14,10 +14,10 @@ EXPOSE 8000
 ENV PYTHONUNBUFFERED 1
 RUN /usr/local/bin/pip install --upgrade pip setuptools wheel
 COPY pyproject.toml /app/
+WORKDIR /app
 RUN /usr/local/bin/pip install -e .
 
 COPY . /app
-WORKDIR /app
 COPY --from=build /app/dist /app/frontend/dist
 RUN ln -s /data ./data
 CMD ["/usr/local/bin/gunicorn", "-w", "4", "backend.app:create_app()", "-b", "0.0.0.0:8000"]
