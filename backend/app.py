@@ -122,7 +122,7 @@ def create_app(test_config=None):
         return Response(data, mimetype="text/calendar")
 
     @app.route("/favicon.svg")
-    def favicon() -> str:
+    def favicon() -> Response:
         if os.path.exists("../frontend/dist/"):
             return app.send_static_file("favicon.svg")
         else:
@@ -144,7 +144,7 @@ def create_app(test_config=None):
 
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
-    def root(path) -> str:
+    def root(path) -> Response:
         if os.path.exists("../frontend/dist/"):
             return app.send_static_file("index.html")
         else:
