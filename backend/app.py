@@ -123,7 +123,12 @@ def create_app(test_config=None):
 
     @app.route("/favicon.svg")
     def favicon() -> str:
-        return app.send_static_file("favicon.svg")
+        if os.path.exists("../frontend/dist/"):
+            return app.send_static_file("favicon.svg")
+        else:
+            return Response(
+                "Frontend has not been built", mimetype="image/svg+xml; charset=utf-8"
+            )
 
     @app.route("/heartbeat")
     def heartbeat():
@@ -140,7 +145,7 @@ def create_app(test_config=None):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def root(path) -> str:
-        if os.path.exists(f"../frontend/dist/index.html"):
+        if os.path.exists("../frontend/dist/"):
             return app.send_static_file("index.html")
         else:
             return Response("Frontend has not been built", mimetype="text/html")
