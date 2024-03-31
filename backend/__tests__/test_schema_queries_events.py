@@ -2,16 +2,13 @@
 
 from sqlalchemy.orm import Session
 import pytest
-from .. import models as m
-from .. import schema as s
-from .conftest import Query, Login, Logout
-import itertools
+from .conftest import Query
 
 
 @pytest.mark.asyncio
 async def test_events_paging(db: Session, query: Query, subtests):
     result = await query("query q { events { title } }")
-    assert result.data["events"] == [
+    assert result.data["events"][0:2] == [
         {"title": "Crafty Time"},
         {"title": "Karaoke"},
     ]

@@ -4,6 +4,7 @@ from flask.testing import FlaskClient
 
 from ..app import create_app
 
+
 @pytest.fixture
 def app():
     yield create_app(
@@ -56,3 +57,9 @@ def test_error(client: FlaskClient):
     response = client.get("/error")
     assert response.status_code == 500
     assert response.content_type == "text/html; charset=utf-8"
+
+
+# def test_calendar(client: FlaskClient):
+#     response = client.get("/calendar/bob.ics")
+#     assert response.status_code == 200
+#     assert response.content_type == "text/calendar"

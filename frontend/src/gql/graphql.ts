@@ -14,21 +14,29 @@ export type Scalars = {
   Boolean: { input: boolean; output: boolean; }
   Int: { input: number; output: number; }
   Float: { input: number; output: number; }
+  /** Date with time (isoformat) */
+  DateTime: { input: any; output: any; }
   /** Represents NULL values */
   Void: { input: any; output: any; }
 };
 
 export type Event = {
   __typename?: 'Event';
+  created: Scalars['DateTime']['output'];
   description: Scalars['String']['output'];
+  endTime: Scalars['DateTime']['output'];
   id: Scalars['Int']['output'];
+  lastUpdated: Scalars['DateTime']['output'];
   owner: User;
+  startTime: Scalars['DateTime']['output'];
   tags: Array<Scalars['String']['output']>;
   title: Scalars['String']['output'];
 };
 
 export type EventInput = {
   description: Scalars['String']['input'];
+  endTime?: InputMaybe<Scalars['DateTime']['input']>;
+  startTime?: InputMaybe<Scalars['DateTime']['input']>;
   tags?: InputMaybe<Array<Scalars['String']['input']>>;
   title?: InputMaybe<Scalars['String']['input']>;
 };
@@ -101,11 +109,13 @@ export type QueryUserArgs = {
 
 export type User = {
   __typename?: 'User';
+  created: Scalars['DateTime']['output'];
   email: Scalars['String']['output'];
   friends: Array<User>;
   friendsIncoming: Array<User>;
   friendsOutgoing: Array<User>;
   isFriend: Scalars['Boolean']['output'];
+  lastUpdated: Scalars['DateTime']['output'];
   username: Scalars['String']['output'];
 };
 

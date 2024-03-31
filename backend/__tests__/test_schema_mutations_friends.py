@@ -1,9 +1,7 @@
 # mypy: disable-error-code="index"
 
-from sqlalchemy.orm import Session
 import pytest
-from .. import models as m
-from .conftest import Query, Login, Logout
+from .conftest import Query, Login
 
 
 @pytest.mark.asyncio
@@ -13,7 +11,7 @@ async def test_addFriend_anon(query: Query):
         'mutation m { addFriend(username: "Frank") }',
         error="Anonymous users can't add friends",
     )
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
 
 @pytest.mark.asyncio
@@ -24,7 +22,7 @@ async def test_addFriend_self(query: Query, login: Login):
         'mutation m { addFriend(username: "Alice") }',
         error="You can't add yourself",
     )
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
 
 @pytest.mark.asyncio
@@ -32,14 +30,14 @@ async def test_addFriend_dupe(query: Query, login: Login):
     # log in as alice and add frank as a friend
     await login("Alice")
     result = await query('mutation m { addFriend(username: "Frank") }')
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
     # try to add frank again
     result = await query(
         'mutation m { addFriend(username: "Frank") }',
         error="Friend request already sent",
     )
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
 
 @pytest.mark.asyncio
@@ -49,7 +47,7 @@ async def test_addFriend_notfound(query: Query, login: Login):
     result = await query(
         'mutation m { addFriend(username: "NotAUser") }', error="User not found"
     )
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
 
 @pytest.mark.asyncio
@@ -59,7 +57,7 @@ async def test_removeFriend_notfound(query: Query, login: Login):
     result = await query(
         'mutation m { removeFriend(username: "NotAUser") }', error="User not found"
     )
-    assert result.data["removeFriend"] == None
+    assert result.data["removeFriend"] is None
 
 
 @pytest.mark.asyncio
@@ -67,7 +65,7 @@ async def test_addFriend_e2e(query: Query, login: Login):
     # log in as alice and add frank as a friend
     await login("Alice")
     result = await query('mutation m { addFriend(username: "Frank") }')
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
     # check the request was created
     result = await query("query q { user { friendsOutgoing { username } } }")
@@ -84,7 +82,7 @@ async def test_addFriend_e2e(query: Query, login: Login):
 
     # accept the request
     result = await query('mutation m { addFriend(username: "Alice") }')
-    assert result.data["addFriend"] == None
+    assert result.data["addFriend"] is None
 
     # check frank's friends list
     result = await query("query q { user { friends { username } } }")
@@ -97,7 +95,7 @@ async def test_addFriend_e2e(query: Query, login: Login):
 
     # remove the friend
     result = await query('mutation m { removeFriend(username: "Frank") }')
-    assert result.data["removeFriend"] == None
+    assert result.data["removeFriend"] is None
 
     # check alice's friends list
     result = await query("query q { user { friends { username } } }")

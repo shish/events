@@ -8,7 +8,7 @@ import { Tag, TagList } from "./Tag";
 export const Calendar = sectionMaker(function({events}: {events: EventViewFragment[]}) {
     return (
         <>
-            <h3>Calendar</h3>
+            <h3>Calendar (<a href={`/calendar/global.ics`}>.ics file</a>)</h3>
             <p>TODO: make this look more like a calendar</p>
             <ul>
                 {events.map(event => (

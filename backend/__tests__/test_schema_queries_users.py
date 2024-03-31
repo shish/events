@@ -1,18 +1,14 @@
 # mypy: disable-error-code="index"
 
-from sqlalchemy.orm import Session
 import pytest
-from .. import models as m
-from .. import schema as s
-from .conftest import Query, Login, Logout
-import itertools
+from .conftest import Query, Login
 
 
 @pytest.mark.asyncio
 async def test_user_self(query: Query, login: Login, subtests):
     with subtests.test("anon-view-self"):
         result = await query("query q { user { username } }")
-        assert result.data["user"] == None
+        assert result.data["user"] is None
 
     with subtests.test("user-view-self"):
         await login("Alice")
@@ -49,13 +45,15 @@ async def test_user_others(query: Query, login: Login, subtests):
             'query q { user(username: "Alice") { username } }',
             error="Anonymous users can't view other users",
         )
-        assert result.data["user"] == None
+        assert result.data["user"] is None
 
     with subtests.test("user-view-others-username"):
         await login("Alice")
         result = await query('query q { user(username: "Bob") { username isFriend } }')
         assert result.data["user"] == {"username": "Bob", "isFriend": True}
-        result = await query('query q { user(username: "Charlie") { username isFriend } }')
+        result = await query(
+            'query q { user(username: "Charlie") { username isFriend } }'
+        )
         assert result.data["user"] == {"username": "Charlie", "isFriend": False}
 
     with subtests.test("user-view-others-friends"):
@@ -64,5 +62,4 @@ async def test_user_others(query: Query, login: Login, subtests):
             'query q { user(username: "Bob") { friends { username } } }',
             error="You can only view your own data.",
         )
-        assert result.data["user"] == None
-
+        assert result.data["user"] is None

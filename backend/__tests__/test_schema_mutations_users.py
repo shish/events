@@ -53,7 +53,7 @@ async def test_createUser(db: Session, query: Query, subtests):
             email="",
             error="A user with that name already exists",
         )
-        assert result.data["createUser"] == None
+        assert result.data["createUser"] is None
 
     with subtests.test("login"):
         result = await query(
@@ -77,7 +77,7 @@ async def test_createUser(db: Session, query: Query, subtests):
             email="",
             error="Username is required",
         )
-        assert result.data["createUser"] == None
+        assert result.data["createUser"] is None
 
     with subtests.test("badname - long"):
         result = await query(
@@ -88,7 +88,7 @@ async def test_createUser(db: Session, query: Query, subtests):
             email="",
             error="Username needs to be less than 32 characters",
         )
-        assert result.data["createUser"] == None
+        assert result.data["createUser"] is None
 
     with subtests.test("badname - punctuation"):
         result = await query(
@@ -99,7 +99,7 @@ async def test_createUser(db: Session, query: Query, subtests):
             email="",
             error="Username can only contain letters, numbers, and underscores",
         )
-        assert result.data["createUser"] == None
+        assert result.data["createUser"] is None
 
     with subtests.test("badpass"):
         result = await query(
@@ -110,7 +110,7 @@ async def test_createUser(db: Session, query: Query, subtests):
             email="",
             error="Bad password",
         )
-        assert result.data["createUser"] == None
+        assert result.data["createUser"] is None
 
 
 @pytest.mark.asyncio
@@ -119,14 +119,14 @@ async def test_login(query):
         'mutation m { login(username: "Alice", password: "badpass") { username } }',
         error="User not found",
     )
-    assert result.data["login"] == None
+    assert result.data["login"] is None
 
 
 @pytest.mark.asyncio
 async def test_login_logout(query: Query, login: Login, logout: Logout):
     # anonymous
     result = await query("query q { user { username } }")
-    assert result.data["user"] == None
+    assert result.data["user"] is None
 
     # log in
     await login("Alice")
@@ -140,7 +140,7 @@ async def test_login_logout(query: Query, login: Login, logout: Logout):
 
     # anonymous
     result = await query("query q { user { username } }")
-    assert result.data["user"] == None
+    assert result.data["user"] is None
 
 
 UPDATE_USER = """
@@ -175,7 +175,7 @@ async def test_updateUser_anon(query: Query):
         email="",
         error="Anonymous users can't save settings",
     )
-    assert result.data == None
+    assert result.data is None
 
 
 @pytest.mark.asyncio
@@ -190,7 +190,7 @@ async def test_updateUser_badpass(query: Query, login: Login):
         email="",
         error="Current password incorrect",
     )
-    assert result.data == None
+    assert result.data is None
 
 
 @pytest.mark.asyncio
@@ -205,7 +205,7 @@ async def test_updateUser_conflict_username(query: Query, login: Login):
         email="",
         error="Another user with that name already exists",
     )
-    assert result.data == None
+    assert result.data is None
 
 
 @pytest.mark.asyncio
@@ -220,4 +220,3 @@ async def test_updateUser_valid(query: Query, login: Login):
         email="foobar@example.com",
     )
     assert result.data["updateUser"]["username"] == "Alice2"
-

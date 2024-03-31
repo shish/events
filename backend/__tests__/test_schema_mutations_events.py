@@ -3,8 +3,7 @@
 from sqlalchemy.orm import Session
 import pytest
 from .. import models as m
-from .conftest import Query, Login, Logout
-
+from .conftest import Query, Login
 
 
 @pytest.mark.asyncio
@@ -15,7 +14,9 @@ async def test_createEvent(db: Session, query: Query, login: Login, subtests):
                 event: {
                     title: "TestTitle"
                     description: "TestDesc"
-                    tags: ["social", "sober"]
+                    tags: ["social", "sober"],
+                    startTime: "2021-01-01T00:00:00",
+                    endTime: "2021-01-01T01:00:00",
                 }
             ) {
                 id
@@ -25,10 +26,8 @@ async def test_createEvent(db: Session, query: Query, login: Login, subtests):
 
     with subtests.test("anon"):
         # anon can't create a survey
-        result = await query(
-            CREATE_EVENT, error="Anonymous users can't create events"
-        )
-        assert result.data == None
+        result = await query(CREATE_EVENT, error="Anonymous users can't create events")
+        assert result.data is None
 
     with subtests.test("user"):
         # log in

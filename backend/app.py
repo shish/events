@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 import datetime
 
 from . import schema as s
+from . import models as m
 
 
 class MyGraphQLView(AsyncGraphQLView):
@@ -33,7 +34,7 @@ def create_app(test_config=None):
         DATABASE_ECHO=False,
         SESSION_COOKIE_SECURE=True,
         SESSION_COOKIE_SAMESITE="None",
-        PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=365)
+        PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=365),
     )
     if test_config is None:  # pragma: no cover
         # load the instance config, if it exists, when not testing
@@ -78,10 +79,47 @@ def create_app(test_config=None):
 
     app.add_url_rule(
         "/graphql",
-        view_func=MyGraphQLView.as_view(
-            "graphql_view", schema=s.schema, graphiql=True
-        ),
+        view_func=MyGraphQLView.as_view("graphql_view", schema=s.schema, graphiql=True),
     )
+
+    @app.route("/calendar/<path:id>.ics")
+    def calendar(id: str) -> Response:
+        db: Session = g.db
+        events = db.query(m.Event).all()
+        import icalendar as c
+
+        cal = c.Calendar()
+        cal.add("prodid", "-//Event Index//events.shish.io//")
+        cal.add("version", "2.0")
+        for event in events:
+            cal.add_component(
+                c.Event(
+                    uid=f"{event.id}@events.shish.io",
+                    dtstamp=c.vDatetime(datetime.datetime.now()),
+                    created=c.vDatetime(event.created),
+                    last_modified=c.vDatetime(event.last_updated),
+                    summary=event.title,
+                    description=event.description,
+                    dtstart=c.vDatetime(event.start_time),
+                    dtend=c.vDatetime(event.end_time),
+                    # sequence=0,
+                    # status='CONFIRMED',
+                    # transparency='OPAQUE',
+                    # location='Somewhere',
+                    # organizer='mailto:" + event.owner.email,"
+                    # url='http://example.com',
+                    # categories=['Event'],
+                    # class='PUBLIC',
+                    # geo=(37.386013, -122.082932),
+                    # priority=5,
+                    # resources=['Easels'],
+                    # comment='This is a comment',
+                    # alarms=[{'action': 'DISPLAY', 'trigger': '-PT1H'}],
+                    # rrule={'freq': 'DAILY', 'count': 10}
+                )
+            )
+        data = cal.to_ical()
+        return Response(data, mimetype="text/calendar")
 
     @app.route("/favicon.svg")
     def favicon() -> str:
@@ -92,7 +130,7 @@ def create_app(test_config=None):
         return jsonify({"status": "healthy"})
 
     @app.route("/assets/<path:x>")
-    def assets(x) -> str:
+    def assets(x: str) -> str:
         return app.send_static_file(f"assets/{x}")
 
     @app.route("/error")

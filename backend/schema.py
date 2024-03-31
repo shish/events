@@ -2,20 +2,21 @@
 
 import typing as t
 import re
+import datetime
 from typing import TypedDict
 from flask.sessions import SessionMixin
 
 from sqlalchemy import select, func, and_, or_
 from sqlalchemy.orm import Session
 import strawberry
-from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper  # type: ignore
+from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper, StrawberrySQLAlchemyLoader  # type: ignore
 from strawberry.permission import BasePermission
 from strawberry.types.info import Info as SInfo
 
 from . import models as m
 from .query_counter import QueryCounter
 
-strawberry_sqlalchemy_mapper = StrawberrySQLAlchemyMapper()
+strawberry_sqlalchemy_mapper: StrawberrySQLAlchemyMapper = StrawberrySQLAlchemyMapper()
 
 
 Context = TypedDict(
@@ -23,7 +24,7 @@ Context = TypedDict(
     {
         "db": Session,
         "cookie": SessionMixin,
-        "sqlalchemy_loader": StrawberrySQLAlchemyMapper,
+        "sqlalchemy_loader": StrawberrySQLAlchemyLoader,
         "cache": t.Dict[str, t.Any],
     },
 )
@@ -92,7 +93,8 @@ class EventInput:
     title: t.Optional[str] = None
     description: str
     tags: t.Optional[t.List[str]] = None
-
+    startTime: t.Optional[datetime.datetime] = None
+    endTime: t.Optional[datetime.datetime] = None
 
 
 #############################################
@@ -122,6 +124,7 @@ class Query:
     def event(self, info: Info, event_id: int) -> m.Event:
         db = info.context["db"]
         return db.query(m.Event).where(m.Event.id == event_id).one()
+
 
 @strawberry.type
 class Mutation:
@@ -177,7 +180,6 @@ class Mutation:
 
     @strawberry.mutation(graphql_type=t.Optional[User])
     def login(self, info: Info, username: str, password: str) -> t.Optional[m.User]:
-        db = info.context["db"]
         user = by_username(info, username)
         if not user or not user.check_password(password):
             raise Exception("User not found")
@@ -246,7 +248,10 @@ class Mutation:
             title=event.title,
             description=event.description,
             user_id=user.id,
-            tags=[get_or_create_tag(info, t) for t in event.tags]
+            tags=[get_or_create_tag(info, t) for t in (event.tags or [])],
+            last_updated=datetime.datetime.now(),
+            start_time=event.startTime,
+            end_time=event.endTime,
         )
         db.add(new_event)
         db.flush()
@@ -256,6 +261,7 @@ class Mutation:
 
 #######################################################################
 # Utils
+
 
 def validate_new_username(info: Info, username: str) -> None:
     if not username:
@@ -306,6 +312,7 @@ def get_or_create_tag(info: Info, name: str) -> m.Tag:
         t = m.Tag(name=name)
         db.add(t)
     return t
+
 
 #######################################################################
 # Schema

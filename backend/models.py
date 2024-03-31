@@ -1,15 +1,14 @@
 import typing as t
 import bcrypt
-import enum
 import os
-from sqlalchemy import Column, Table, ForeignKey, create_engine, UniqueConstraint, Enum
+import datetime
+from sqlalchemy import Column, Table, ForeignKey, create_engine
 from sqlalchemy.orm import (
     Session,
     DeclarativeBase,
     Mapped,
     mapped_column,
     relationship,
-    attribute_keyed_dict,
 )
 
 SECURE = True
@@ -31,10 +30,16 @@ class Friendship(Base):
     confirmed: Mapped[bool] = mapped_column(default=False)
 
     friend_a: Mapped["User"] = relationship(
-        "User", back_populates="friends_outgoing", foreign_keys=[friend_a_id], lazy="joined"
+        "User",
+        back_populates="friends_outgoing",
+        foreign_keys=[friend_a_id],
+        lazy="joined",
     )
     friend_b: Mapped["User"] = relationship(
-        "User", back_populates="friends_incoming", foreign_keys=[friend_b_id], lazy="joined"
+        "User",
+        back_populates="friends_incoming",
+        foreign_keys=[friend_b_id],
+        lazy="joined",
     )
 
 
@@ -45,6 +50,10 @@ class User(Base):
     username: Mapped[str] = mapped_column(unique=True, index=True)
     password: Mapped[str]
     email: Mapped[str]
+    created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    last_updated: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
 
     friends_incoming: Mapped[t.List[Friendship]] = relationship(
         "Friendship", foreign_keys=[Friendship.friend_b_id], back_populates="friend_b"
@@ -93,6 +102,7 @@ event_tags = Table(
     Column("tag_id", ForeignKey("tag.id"), primary_key=True),
 )
 
+
 class Event(Base):
     __tablename__ = "event"
 
@@ -100,7 +110,16 @@ class Event(Base):
     title: Mapped[str]
     description: Mapped[str]
     user_id: Mapped[int] = mapped_column("user_id", ForeignKey("user.id"), index=True)
-    tags: Mapped[t.List["Tag"]] = relationship(secondary=event_tags, back_populates="events")
+    created: Mapped[datetime.datetime] = mapped_column(default=datetime.datetime.now)
+    last_updated: Mapped[datetime.datetime] = mapped_column(
+        default=datetime.datetime.now, onupdate=datetime.datetime.now
+    )
+    start_time: Mapped[datetime.datetime]
+    end_time: Mapped[datetime.datetime]
+
+    tags: Mapped[t.List["Tag"]] = relationship(
+        secondary=event_tags, back_populates="events"
+    )
     owner: Mapped[User] = relationship("User")
 
 
@@ -108,7 +127,9 @@ class Tag(Base):
     __tablename__ = "tag"
     id: Mapped[int] = mapped_column("id", primary_key=True)
     name: Mapped[str]
-    events: Mapped[t.List[Event]] = relationship(secondary=event_tags, back_populates="tags")
+    events: Mapped[t.List[Event]] = relationship(
+        secondary=event_tags, back_populates="tags"
+    )
 
 
 def populate_example_data(db: Session):
@@ -138,29 +159,48 @@ def populate_example_data(db: Session):
             tag = Tag(name=name)
             tags.append(tag)
             db.add(tag)
+    db.flush()
     [in_person, online, social] = tags
 
-    e1 = db.query(Event).filter(Event.title == "Crafty Time").first()
-    if not e1:
-        e1 = Event(
+    today = datetime.datetime.now().date()
+    sample_events = [
+        dict(
             title="Crafty Time",
             owner=alice,
             description="Let's meet up and make some stuff",
-            tags=[online, social]
-        )
-        db.add(e1)
-        db.flush()
-
-    e2 = db.query(Event).filter(Event.title == "Karaoke").first()
-    if not e2:
-        e2 = Event(
+            tags=[online, social],
+            start_time=today + datetime.timedelta(days=1, hours=12),
+            end_time=today + datetime.timedelta(days=1, hours=14),
+        ),
+        dict(
             title="Karaoke",
             owner=alice,
             description="Singalingalong",
-            tags=[in_person, social]
-        )
-        db.add(e2)
-        db.flush()
+            tags=[in_person, social],
+            start_time=today + datetime.timedelta(days=2, hours=19),
+            end_time=today + datetime.timedelta(days=2, hours=21),
+        ),
+        dict(
+            title="Movie Night",
+            owner=bob,
+            description="Watch a movie together",
+            tags=[online, social],
+            start_time=today + datetime.timedelta(days=3, hours=19),
+            end_time=today + datetime.timedelta(days=3, hours=22),
+        ),
+        dict(
+            title="Game Night",
+            owner=bob,
+            description="Play some games",
+            tags=[online, social],
+            start_time=today + datetime.timedelta(days=4, hours=18),
+            end_time=today + datetime.timedelta(days=4, hours=21),
+        ),
+    ]
+    for event in sample_events:
+        if not db.query(Event).filter(Event.title == event["title"]).first():
+            db.add(Event(**event))
+            db.flush()
 
     db.commit()
 
