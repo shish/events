@@ -140,6 +140,9 @@ def create_app(test_config=None):
     @app.route("/", defaults={"path": ""})
     @app.route("/<path:path>")
     def root(path) -> str:
-        return app.send_static_file("index.html")
+        if os.path.exists(f"../frontend/dist/index.html"):
+            return app.send_static_file("index.html")
+        else:
+            return Response("Frontend has not been built", mimetype="text/html")
 
     return app
