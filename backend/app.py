@@ -38,6 +38,8 @@ def create_app(test_config=None):
     if test_config is None:  # pragma: no cover
         # load the instance config, if it exists, when not testing
         app.config.from_pyfile("config.py", silent=True)
+        if not os.path.exists("data"):
+            os.mkdir("data")
         if not os.path.exists("./data/secret.txt"):
             with open("./data/secret.txt", "wb") as fp:
                 fp.write(os.urandom(32))
@@ -59,6 +61,7 @@ def create_app(test_config=None):
     def init_db_command():  # pragma: no cover
         """Clear the existing data and create new tables."""
         with app.app_context():
+            m.db.drop_all()
             m.db.create_all()
             m.populate_example_data(m.db)
         click.echo("Initialized the database.")
