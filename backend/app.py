@@ -1,10 +1,10 @@
-from flask import Flask, Request, Response, g, session, jsonify
+from flask import Flask, Request, Response, session, jsonify
 from strawberry.flask.views import AsyncGraphQLView
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyLoader  # type: ignore
 import os
-from sqlalchemy import create_engine
-from sqlalchemy.orm import Session
 import datetime
+import click
+from sqlalchemy import select
 
 from . import schema as s
 from . import models as m
@@ -13,10 +13,10 @@ from . import models as m
 class MyGraphQLView(AsyncGraphQLView):
     async def get_context(self, request: Request, response: Response) -> s.Context:
         return {
-            "db": g.db,
+            "db": m.db,
             "cookie": session,
             "cache": {},
-            "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=g.db),
+            "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=m.db.session),
         }
 
 
@@ -30,8 +30,7 @@ def create_app(test_config=None):
         static_folder="../frontend/dist",
     )
     app.config.from_mapping(
-        DATABASE_URL="sqlite:///data/events.sqlite",
-        DATABASE_ECHO=False,
+        SQLALCHEMY_DATABASE_URI="sqlite:///events.sqlite",
         SESSION_COOKIE_SECURE=True,
         SESSION_COOKIE_SAMESITE="None",
         PERMANENT_SESSION_LIFETIME=datetime.timedelta(days=365),
@@ -54,38 +53,37 @@ def create_app(test_config=None):
     ###################################################################
     # Load database
 
-    engine = create_engine(
-        app.config.get("DATABASE_URL"),
-        echo=app.config.get("DATABASE_ECHO"),
-    )
+    m.db.init_app(app)
 
-    @app.before_request
-    def connect_db() -> None:
-        g.db = Session(engine)
-        # ensure that there is an open connection from the start of the request,
-        # to avoid connections being opened on-demand in other threads
-        g.db.connection()
+    @click.command("init-db")
+    def init_db_command():  # pragma: no cover
+        """Clear the existing data and create new tables."""
+        with app.app_context():
+            m.db.create_all()
+            m.populate_example_data(m.db)
+        click.echo("Initialized the database.")
 
-    @app.teardown_request
-    def teardown_db(exception=None) -> None:
-        if exception:
-            g.db.rollback()
-        else:
-            g.db.commit()
-        g.db.close()
+    app.cli.add_command(init_db_command)
+
+    # @app.teardown_request
+    # def teardown_db(exception=None) -> None:
+    #    if exception:
+    #        g.db.rollback()
+    #    else:
+    #        g.db.commit()
+    #    g.db.close()
 
     ###################################################################
     # Public routes
 
     app.add_url_rule(
         "/graphql",
-        view_func=MyGraphQLView.as_view("graphql_view", schema=s.schema, graphiql=True),
+        view_func=MyGraphQLView.as_view("graphql_view", schema=s.schema, graphql_ide=True),
     )
 
     @app.route("/calendar/<path:id>.ics")
     def calendar(id: str) -> Response:
-        db: Session = g.db
-        events = db.query(m.Event).all()
+        events = m.db.session.execute(select(m.Event)).scalars()
         import icalendar as c
 
         cal = c.Calendar()

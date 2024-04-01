@@ -1,28 +1,50 @@
+from flask import Flask
+from flask.ctx import AppContext
 from flask.sessions import SecureCookieSession
-from sqlalchemy import create_engine
+from flask.testing import FlaskClient
+from flask_sqlalchemy import SQLAlchemy
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyLoader  # type: ignore
-from sqlalchemy.orm import Session
 from graphql import ExecutionResult
 import pytest
 import typing as t
 
 from .. import schema as s
 from .. import models as m
+from ..app import create_app
 
 
-@pytest.fixture(autouse=True)
-def reset_secure() -> None:
-    m.SECURE = False
+"""
+import dataclasses
 
+@dataclasses.dataclass
+class TestCtx:
+    app: Flask
+    client: FlaskClient
+    ctx: AppContext
+    db: SQLAlchemy
+    cookie: SecureCookieSession
+"""
+@pytest.fixture
+def app() -> Flask:
+    return create_app(
+        test_config={
+            "DATABASE_URL": "sqlite:///:memory:",
+            "DATABASE_ECHO": True,
+        }
+    )
 
 @pytest.fixture
-def db() -> Session:
-    engine = create_engine("sqlite://", echo=False)
-    db = Session(engine)
-    m.Base.metadata.create_all(engine)
-    m.populate_example_data(db)
-    return db
+def client(app: Flask) -> FlaskClient:
+    return app.test_client()
 
+@pytest.fixture
+def db(app: Flask) -> t.Generator[SQLAlchemy, t.Any, t.Any]:
+    with app.app_context():
+        m.SECURE = False
+        m.db.drop_all()
+        m.db.create_all()
+        m.populate_example_data(m.db)
+        yield m.db
 
 @pytest.fixture
 def cookie() -> SecureCookieSession:
@@ -39,15 +61,15 @@ class Query(t.Protocol):
 @pytest.fixture
 def query(db, cookie) -> Query:
     async def _query(q, error: t.Optional[str] = None, **kwargs):
-        ctx: s.Context = {
+        gqlctx: s.Context = {
             "db": db,
             "cookie": cookie,
             "cache": {},
-            "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=db),
+            "sqlalchemy_loader": StrawberrySQLAlchemyLoader(bind=db.session),
         }
         result = await s.schema.execute(
             q,
-            context_value=ctx,
+            context_value=gqlctx,
             variable_values=kwargs,
         )
         if error:

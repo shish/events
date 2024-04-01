@@ -5,9 +5,9 @@ import re
 import datetime
 from typing import TypedDict
 from flask.sessions import SessionMixin
+from flask_sqlalchemy import SQLAlchemy
 
-from sqlalchemy import select, func, and_, or_
-from sqlalchemy.orm import Session
+from sqlalchemy import select, func, and_, or_, delete
 import strawberry
 from strawberry_sqlalchemy_mapper import StrawberrySQLAlchemyMapper, StrawberrySQLAlchemyLoader  # type: ignore
 from strawberry.permission import BasePermission
@@ -22,7 +22,7 @@ strawberry_sqlalchemy_mapper: StrawberrySQLAlchemyMapper = StrawberrySQLAlchemyM
 Context = TypedDict(
     "Context",
     {
-        "db": Session,
+        "db": SQLAlchemy,
         "cookie": SessionMixin,
         "sqlalchemy_loader": StrawberrySQLAlchemyLoader,
         "cache": t.Dict[str, t.Any],
@@ -118,12 +118,12 @@ class Query:
     @strawberry.field(graphql_type=t.Sequence[Event])
     def events(self, info: Info) -> t.Sequence[m.Event]:
         db = info.context["db"]
-        return db.query(m.Event).all()
+        return db.session.execute(db.select(m.Event)).scalars()
 
     @strawberry.field(graphql_type=Event)
     def event(self, info: Info, event_id: int) -> m.Event:
         db = info.context["db"]
-        return db.query(m.Event).where(m.Event.id == event_id).one()
+        return db.get_or_404(m.Event, event_id)
 
 
 @strawberry.type
@@ -145,8 +145,8 @@ class Mutation:
         validate_new_username(info, username)
         validate_new_password(password1, password2)
         user = m.User(username, password1, email)
-        db.add(user)
-        db.flush()
+        db.session.add(user)
+        db.session.flush()
         info.context["cookie"]["username"] = user.username
         return user
 
@@ -175,12 +175,14 @@ class Mutation:
             user.set_password(password1)
         if email:
             user.email = email
-        db.flush()
+        db.session.flush()
         return user
 
     @strawberry.mutation(graphql_type=t.Optional[User])
     def login(self, info: Info, username: str, password: str) -> t.Optional[m.User]:
         user = by_username(info, username)
+        if not user:
+            raise Exception("User not found2222")
         if not user or not user.check_password(password):
             raise Exception("User not found")
         info.context["cookie"].permanent = True
@@ -212,8 +214,8 @@ class Mutation:
                 raise Exception("Friend request already sent")
 
         friendship = m.Friendship(friend_a_id=user.id, friend_b_id=friend.id)
-        db.add(friendship)
-        db.flush()
+        db.session.add(friendship)
+        db.session.flush()
 
     @strawberry.mutation
     def remove_friend(self, info: Info, username: str) -> None:
@@ -222,7 +224,7 @@ class Mutation:
         friend = by_username(info, username)
         if not friend:
             raise Exception("User not found")
-        db.query(m.Friendship).filter(
+        db.session.execute(delete(m.Friendship).where(
             or_(
                 and_(
                     m.Friendship.friend_a_id == user.id,
@@ -233,8 +235,8 @@ class Mutation:
                     m.Friendship.friend_b_id == user.id,
                 ),
             )
-        ).delete()
-        db.flush()
+        ))
+        db.session.flush()
 
     ###################################################################
     # Surveys
@@ -253,8 +255,8 @@ class Mutation:
             start_time=event.startTime,
             end_time=event.endTime,
         )
-        db.add(new_event)
-        db.flush()
+        db.session.add(new_event)
+        db.session.flush()
 
         return new_event
 
@@ -300,17 +302,17 @@ def by_username(info: Info, username: t.Optional[str]) -> t.Optional[m.User]:
     key = f"user-{username}"
     if key not in cache:
         stmt = select(m.User).where(func.lower(m.User.username) == func.lower(username))
-        cache[key] = db.execute(stmt).scalars().first()
+        cache[key] = db.session.execute(stmt).scalars().first()
     return cache[key]
 
 
 def get_or_create_tag(info: Info, name: str) -> m.Tag:
     db = info.context["db"]
     stmt = select(m.Tag).where(func.lower(m.Tag.name) == func.lower(name))
-    t = db.execute(stmt).scalars().first()
+    t = db.session.execute(stmt).scalars().first()
     if not t:
         t = m.Tag(name=name)
-        db.add(t)
+        db.session.add(t)
     return t
 
 

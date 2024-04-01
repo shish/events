@@ -1,13 +1,14 @@
 # mypy: disable-error-code="index"
 
+from flask_sqlalchemy import SQLAlchemy
 from sqlalchemy.orm import Session
 import pytest
 from .. import models as m
 from .conftest import Query, Login, Logout
-
+from sqlalchemy import select
 
 @pytest.mark.asyncio
-async def test_createUser(db: Session, query: Query, subtests):
+async def test_createUser(db: SQLAlchemy, query: Query, subtests):
     CREATE_USER = """
         mutation m($username: String!, $password1: String!, $password2: String!, $email: String!) {
             createUser(
@@ -32,11 +33,9 @@ async def test_createUser(db: Session, query: Query, subtests):
         assert result.data["createUser"]["username"] == "TestUser"
 
         # check the user was created
-        user = (
-            db.query(m.User)
-            .filter(m.User.username == result.data["createUser"]["username"])
-            .one()
-        )
+        user = db.session.execute(select(m.User)
+            .where(m.User.username == result.data["createUser"]["username"])
+        ).scalar_one()
         assert user.username == "TestUser"
         assert user.check_password("TestPass")
 

@@ -2,7 +2,7 @@ import typing as t
 import bcrypt
 import os
 import datetime
-from sqlalchemy import Column, Table, ForeignKey, create_engine
+from sqlalchemy import Column, ForeignKey, create_engine, select
 from sqlalchemy.orm import (
     Session,
     DeclarativeBase,
@@ -10,6 +10,7 @@ from sqlalchemy.orm import (
     mapped_column,
     relationship,
 )
+from flask_sqlalchemy import SQLAlchemy
 
 SECURE = True
 
@@ -18,7 +19,10 @@ class Base(DeclarativeBase):
     pass
 
 
-class Friendship(Base):
+db = SQLAlchemy(model_class=Base)
+
+
+class Friendship(db.Model):
     __tablename__ = "friendship"
 
     friend_a_id: Mapped[int] = mapped_column(
@@ -43,7 +47,7 @@ class Friendship(Base):
     )
 
 
-class User(Base):
+class User(db.Model):
     __tablename__ = "user"
 
     id: Mapped[int] = mapped_column("id", primary_key=True)
@@ -95,7 +99,7 @@ class User(Base):
         return f"<User {self.username}>"
 
 
-event_tags = Table(
+event_tags = db.Table(
     "event_tags",
     Base.metadata,
     Column("event_id", ForeignKey("event.id"), primary_key=True),
@@ -103,7 +107,7 @@ event_tags = Table(
 )
 
 
-class Event(Base):
+class Event(db.Model):
     __tablename__ = "event"
 
     id: Mapped[int] = mapped_column("id", primary_key=True)
@@ -123,7 +127,7 @@ class Event(Base):
     owner: Mapped[User] = relationship("User")
 
 
-class Tag(Base):
+class Tag(db.Model):
     __tablename__ = "tag"
     id: Mapped[int] = mapped_column("id", primary_key=True)
     name: Mapped[str]
@@ -132,34 +136,28 @@ class Tag(Base):
     )
 
 
-def populate_example_data(db: Session):
+def populate_example_data(db: SQLAlchemy):
+    print("Populating example data")
     users: t.List[User] = []
-    created_users = False
     for name in ["Alice", "Bob", "Charlie", "Dave", "Evette", "Frank"]:
-        user = db.query(User).filter(User.username == name).first()
-        if not user:
-            created_users = True
-            user = User(name, name.lower() + "pass")
-            users.append(user)
-            db.add(user)
+        user = User(name, name.lower() + "pass")
+        db.session.add(user)
+        users.append(user)
     [alice, bob, charlie, dave, evette, frank] = users
     alice.email = "alice@example.com"
 
-    if created_users:
-        f = Friendship(friend_a=alice, friend_b=bob, confirmed=True)
-        db.add(f)
+    f = Friendship(friend_a=alice, friend_b=bob, confirmed=True)
+    db.session.add(f)
 
-        f = Friendship(friend_a=charlie, friend_b=alice, confirmed=False)
-        db.add(f)
+    f = Friendship(friend_a=charlie, friend_b=alice, confirmed=False)
+    db.session.add(f)
 
     tags: t.List[Tag] = []
     for name in ["in-person", "online", "social"]:
-        tag = db.query(Tag).filter(Tag.name == name).first()
-        if not tag:
-            tag = Tag(name=name)
-            tags.append(tag)
-            db.add(tag)
-    db.flush()
+        tag = Tag(name=name)
+        db.session.add(tag)
+        tags.append(tag)
+    db.session.flush()
     [in_person, online, social] = tags
 
     today = datetime.datetime.now().date()
@@ -198,16 +196,7 @@ def populate_example_data(db: Session):
         ),
     ]
     for event in sample_events:
-        if not db.query(Event).filter(Event.title == event["title"]).first():
-            db.add(Event(**event))
-            db.flush()
+        db.session.add(Event(**event))
+        db.session.flush()
 
-    db.commit()
-
-
-if __name__ == "__main__":  # pragma: no cover
-    os.makedirs("./data", exist_ok=True)
-    engine = create_engine("sqlite:///data/events.sqlite", echo=False)
-    Base.metadata.drop_all(engine)
-    Base.metadata.create_all(engine)
-    populate_example_data(Session(engine))
+    db.session.commit()

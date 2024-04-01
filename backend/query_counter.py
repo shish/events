@@ -19,7 +19,7 @@ class QueryCounter(SchemaExtension):
             raise Exception("Too many queries!")
 
     def on_operation(self):
-        conn = self.execution_context.context["db"].connection()
+        conn = self.execution_context.context["db"].session.connection()
         event.listen(conn, "before_cursor_execute", self.callback)
         yield
         event.remove(conn, "before_cursor_execute", self.callback)

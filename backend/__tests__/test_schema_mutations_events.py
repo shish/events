@@ -1,13 +1,14 @@
 # mypy: disable-error-code="index"
 
-from sqlalchemy.orm import Session
+from flask_sqlalchemy import SQLAlchemy
+from sqlalchemy import select
 import pytest
 from .. import models as m
 from .conftest import Query, Login
 
 
 @pytest.mark.asyncio
-async def test_createEvent(db: Session, query: Query, login: Login, subtests):
+async def test_createEvent(db: SQLAlchemy, query: Query, login: Login, subtests):
     CREATE_EVENT = """
         mutation m {
             createEvent(
@@ -39,9 +40,9 @@ async def test_createEvent(db: Session, query: Query, login: Login, subtests):
 
         # check the survey was created
         event = (
-            db.query(m.Event)
-            .filter(m.Event.id == result.data["createEvent"]["id"])
-            .one()
+            db.session.execute(select(m.Event)
+            .where(m.Event.id == result.data["createEvent"]["id"]))
+            .scalar_one()
         )
         assert event.title == "TestTitle"
         assert event.description == "TestDesc"

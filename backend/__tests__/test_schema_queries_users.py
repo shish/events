@@ -2,7 +2,7 @@
 
 import pytest
 from .conftest import Query, Login
-
+import typing as t
 
 @pytest.mark.asyncio
 async def test_user_self(query: Query, login: Login, subtests):

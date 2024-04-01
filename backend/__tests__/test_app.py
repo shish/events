@@ -1,23 +1,5 @@
-import pytest
-from flask import Flask
 from flask.testing import FlaskClient
-
-from ..app import create_app
-
-
-@pytest.fixture
-def app():
-    yield create_app(
-        test_config={
-            "DATABASE_URL": "sqlite:///:memory:",
-            "DATABASE_ECHO": True,
-        }
-    )
-
-
-@pytest.fixture
-def client(app: Flask):
-    return app.test_client()
+from flask_sqlalchemy import SQLAlchemy
 
 
 def test_graphql(client: FlaskClient):
@@ -59,7 +41,7 @@ def test_error(client: FlaskClient):
     assert response.content_type == "text/html; charset=utf-8"
 
 
-# def test_calendar(client: FlaskClient):
-#     response = client.get("/calendar/bob.ics")
-#     assert response.status_code == 200
-#     assert response.content_type == "text/calendar"
+def test_calendar(client: FlaskClient, db: SQLAlchemy):
+    response = client.get("/calendar/bob.ics")
+    assert response.status_code == 200
+    assert response.content_type == "text/calendar; charset=utf-8"
