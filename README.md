@@ -9,7 +9,7 @@ Open in visual studio code and accept the prompt to use a devcontainer, or use g
 
 [![Open in GitHub Codespaces](https://github.com/codespaces/badge.svg)](https://codespaces.new/shish/events)
 
-Once the IDE is open, `cd frontend && npm run all` to start backend and frontend at once.
+Once the IDE is open, `flask --app events:create_app --debug run` to start backend and frontend at once.
 
 A built-in browser in the IDE should open automatically, with hot-reloading configured for both backend and frontend code.
 

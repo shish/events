@@ -8,4 +8,4 @@ COPY . /app
 WORKDIR /app
 RUN ln -s /data /app/data
 RUN /usr/local/bin/pip install .
-CMD ["/usr/local/bin/flask", "--app", "events", "run", "-h", "0.0.0.0", "-p", "8642"]
+CMD ["/usr/local/bin/flask", "--app", "events:create_app", "run", "-h", "0.0.0.0", "-p", "8642"]
