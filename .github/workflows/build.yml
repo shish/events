@@ -79,4 +79,4 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
       - name: Announce
-        run: curl 'https://du.shish.io/update?name=shish2k/events&tag=latest'
+        run: curl -H "Authorization: Bearer ${{ secrets.WATCHTOWER_TOKEN }}" https://watchtower.shish.io/v1/update
