@@ -200,8 +200,12 @@ def event_update(id: str):
 
     e.title = request.form["title"]
     e.description = request.form["description"]
-    e.start_time = datetime.datetime.strptime(request.form["start_time"], '%Y/%m/%d %H:%M:%S')
-    e.end_time = datetime.datetime.strptime(request.form["end_time"], '%Y/%m/%d %H:%M:%S')
+    e.start_time = datetime.datetime.strptime(
+        request.form["start_time"], "%Y/%m/%d %H:%M:%S"
+    )
+    e.end_time = datetime.datetime.strptime(
+        request.form["end_time"], "%Y/%m/%d %H:%M:%S"
+    )
 
     db.session.commit()
     app.logger.info(f"Event {e.id} updated")
