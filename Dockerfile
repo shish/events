@@ -1,5 +1,5 @@
 FROM python:3.12-slim
-EXPOSE 8000
+EXPOSE 8642
 VOLUME /data
 ENV PYTHONUNBUFFERED 1
 RUN apt update -y && apt install -y sqlite3 rsync && rm -rf /var/lib/apt/lists/*
