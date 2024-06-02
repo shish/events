@@ -86,7 +86,7 @@ jobs:
       - publish
     steps:
       - name: Deploy
-        uses: darnfish/watchtower-update@v3.2
+        uses: shish/watchtower-update@master
         with:
           url: https://watchtower.shish.io/v1/update
           api_token: "${{ secrets.WATCHTOWER_TOKEN }}"
