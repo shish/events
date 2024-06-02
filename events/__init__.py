@@ -4,19 +4,21 @@ from flask import Flask
 
 from .models import db
 from . import models as m
-from .utils import *
-from .routes import *
+from .utils import htmx
+from .routes import index as _index  # just to import the module
 from .app import app
 
 
 def create_app(test_config=None) -> Flask:
+    assert _index is not None
+
     if not os.path.exists("./data"):  # pragma: no cover
         os.makedirs("./data")
     if not os.path.exists("./data/secret.txt"):  # pragma: no cover
         with open("./data/secret.txt", "wb") as fp:
             fp.write(os.urandom(32))
-    with open("./data/secret.txt", "rb") as fp:
-        secret_key = fp.read()
+    with open("./data/secret.txt", "rb") as fp2:
+        secret_key = fp2.read()
     app.config.from_mapping(
         SECRET_KEY=secret_key,
         SQLALCHEMY_DATABASE_URI="sqlite:///events.sqlite",
@@ -52,6 +54,7 @@ def create_app(test_config=None) -> Flask:
             db.session.add(event)
             db.session.commit()
         click.echo("Initialized the database.")
+
     app.cli.add_command(init_db_command)
 
     return app

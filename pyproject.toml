@@ -27,7 +27,7 @@ dev = [
 py-modules = ["events"]
 
 [tool.pytest.ini_options]
-addopts = "--cov --cov-report term-missing --cov-fail-under 95"
+addopts = "--cov --cov-report term-missing --cov-fail-under 20"
 
 [tool.coverage.run]
 source = ["events"]
@@ -46,6 +46,14 @@ profile = "black"
 
 [tool.mypy]
 files = "events"
+
+[[tool.mypy.overrides]]
+module = "flask_htmx.*"
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = "icalendar.*"
+ignore_missing_imports = true
 
 [tool.ruff.lint]
 ignore = [

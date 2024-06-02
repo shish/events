@@ -1,16 +1,26 @@
 import os
-from flask import Response, send_from_directory, render_template, request, redirect, url_for, session, g, abort
+from flask import (
+    Response,
+    send_from_directory,
+    render_template,
+    request,
+    redirect,
+    url_for,
+    session,
+    g,
+)
 from sqlalchemy import select
 import datetime
 
 from .app import app
 from .models import db
 from . import models as m
-from .utils import *
+from .utils import hx_err, hx_redirect, login_required, htmx
 
 
 ###################################################################
 # Root
+
 
 @app.route("/favicon.ico")
 def favicon() -> Response:
@@ -20,13 +30,13 @@ def favicon() -> Response:
         mimetype="image/vnd.microsoft.icon",
     )
 
+
 @app.route("/")
 def index() -> str:
     events = db.session.execute(
         select(m.Event)
-        #.where(Event.end_time > func.now())
-        .order_by(m.Event.start_time)
-        .limit(100)
+        # .where(Event.end_time > func.now())
+        .order_by(m.Event.start_time).limit(100)
     ).scalars()
     return render_template(
         "index.html",
@@ -39,6 +49,7 @@ def index() -> str:
 
 ###################################################################
 # Users
+
 
 @app.route("/user", methods=["POST"])
 def user_create():
@@ -54,7 +65,9 @@ def user_create():
         select(m.User).where(db.func.lower(m.User.username) == db.func.lower(username))
     ).scalar()
     persona = db.session.execute(
-        select(m.Persona).where(db.func.lower(m.Persona.name) == db.func.lower(username))
+        select(m.Persona).where(
+            db.func.lower(m.Persona.name) == db.func.lower(username)
+        )
     ).scalar()
     if user or persona:
         return hx_err(403, "That username has already been taken, sorry D:")
@@ -76,12 +89,12 @@ def user_create():
     app.logger.info("User created")
     return hx_redirect(url_for("user_read", username=username))
 
+
 @app.route("/user/<username>", methods=["GET"])
 @login_required
 def user_read(username: str):
     display_user = db.session.execute(
-        select(m.User)
-        .where(db.func.lower(m.User.username) == db.func.lower(username))
+        select(m.User).where(db.func.lower(m.User.username) == db.func.lower(username))
     ).scalar()
     if not display_user:
         return hx_err(404, "User not found")
@@ -91,6 +104,7 @@ def user_read(username: str):
         display_user=display_user,
         user=g.user,
     )
+
 
 @app.route("/user/<username>", methods=["POST"])
 @login_required
@@ -111,15 +125,21 @@ def user_update(username: str):
 ###################################################################
 # Sessions
 
+
 @app.route("/session", methods=["POST"])
 def session_create():
     username = request.form["username"]
     password = request.form["password"]
 
-    maybe_user = db.session.execute(
-        select(m.User)
-        .where(db.func.lower(m.User.username) == db.func.lower(username))
-    ).scalars().first()
+    maybe_user = (
+        db.session.execute(
+            select(m.User).where(
+                db.func.lower(m.User.username) == db.func.lower(username)
+            )
+        )
+        .scalars()
+        .first()
+    )
     if maybe_user and maybe_user.check_password(password):
         g.user = maybe_user
         session["user_id"] = g.user.id
@@ -128,6 +148,7 @@ def session_create():
     else:
         app.logger.info(f"login failed from {request.remote_addr}")
         return hx_err("Invalid username or password")
+
 
 @app.route("/session", methods=["DELETE"])
 def session_delete():
@@ -138,6 +159,7 @@ def session_delete():
 
 ###################################################################
 # Events
+
 
 @app.route("/event", methods=["POST"])
 @login_required
@@ -154,12 +176,10 @@ def event_create():
     app.logger.info(f"Event {e.id} created ({e.title})")
     return hx_redirect(url_for("event_read", id=e.id))
 
+
 @app.route("/event/<id>", methods=["GET"])
 def event_read(id: str):
-    event = db.session.execute(
-        select(m.Event)
-        .where(m.Event.id == int(id))
-    ).scalar()
+    event = db.session.execute(select(m.Event).where(m.Event.id == int(id))).scalar()
     if not event:
         return hx_err(404, "Event not found")
     return render_template(
@@ -168,22 +188,20 @@ def event_read(id: str):
         user=g.user,
     )
 
+
 @app.route("/event/<id>", methods=["POST"])
 @login_required
 def event_update(id: str):
-    e = db.session.execute(
-        select(m.Event)
-        .where(m.Event.id == int(id))
-    ).scalar()
+    e = db.session.execute(select(m.Event).where(m.Event.id == int(id))).scalar()
     if not e:
         return hx_err(404, "Event not found")
     if e.owner not in g.user.personas:
         return hx_err(403, "You can only update your own events")
-    
+
     e.title = request.form["title"]
     e.description = request.form["description"]
-    e.start_time = request.form["start_time"]
-    e.end_time = request.form["end_time"]
+    e.start_time = datetime.datetime.strptime(request.form["start_time"], '%Y/%m/%d %H:%M:%S')
+    e.end_time = datetime.datetime.strptime(request.form["end_time"], '%Y/%m/%d %H:%M:%S')
 
     db.session.commit()
     app.logger.info(f"Event {e.id} updated")
@@ -191,6 +209,7 @@ def event_update(id: str):
         return render_template("parts/event.html", event=e)
     else:
         return hx_redirect(url_for("event_read", id=id))
+
 
 @app.route("/event/<id>", methods=["DELETE"])
 @login_required
@@ -209,6 +228,7 @@ def event_delete(id: str):
 
 ###################################################################
 # Calendar
+
 
 @app.route("/calendar/<path:id>.ics")
 def calendar(id: str) -> Response:

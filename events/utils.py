@@ -10,12 +10,8 @@ from .app import app
 htmx = HTMX()
 
 
-def hx_abort(status: int, msg: str) -> Response:
-    return make_response(msg, status=status, retarget="#toast")
-
-
-def hx_err(msg: str) -> Response:
-    return make_response(msg, retarget="#toast")
+def hx_err(code: int, msg: str) -> Response:
+    return make_response(msg, status=code, retarget="#toast")
 
 
 def hx_redirect(location: str) -> Response:
@@ -48,7 +44,7 @@ def login_required(view):
     def wrapped_view(**kwargs):
         if g.user is None:
             if htmx:
-                return hx_abort(401, "You must be logged in to access this page")
+                return hx_err(401, "You must be logged in to access this page")
             else:
                 return redirect(url_for("index"))
         return view(**kwargs)

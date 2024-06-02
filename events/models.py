@@ -22,6 +22,7 @@ user_personas = db.Table(
     Column("persona_id", ForeignKey("persona.id"), primary_key=True),
 )
 
+
 class Persona(db.Model):  # type: ignore
     __tablename__ = "persona"
 
@@ -34,6 +35,7 @@ class Persona(db.Model):  # type: ignore
     users: Mapped[t.List["User"]] = relationship(
         secondary=user_personas, back_populates="personas"
     )
+
 
 class User(db.Model):  # type: ignore
     __tablename__ = "user"
@@ -74,7 +76,7 @@ class User(db.Model):  # type: ignore
 
     def __repr__(self) -> str:
         return f"User({self.username!r})"
-    
+
     @property
     def default_persona(self) -> Persona:
         for persona in self.personas:
@@ -91,7 +93,7 @@ event_tags = db.Table(
 )
 
 
-class Event(db.Model):
+class Event(db.Model):  # type: ignore
     __tablename__ = "event"
 
     id: Mapped[int] = mapped_column("id", primary_key=True)
@@ -111,7 +113,7 @@ class Event(db.Model):
     owner: Mapped[Persona] = relationship("Persona")
 
 
-class Tag(db.Model):
+class Tag(db.Model):  # type: ignore
     __tablename__ = "tag"
     id: Mapped[int] = mapped_column(primary_key=True)
     name: Mapped[str]

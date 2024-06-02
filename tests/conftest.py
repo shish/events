@@ -6,8 +6,8 @@ import sqlite3
 from flask import Flask
 from flask.testing import FlaskClient, FlaskCliRunner
 
-from rav2 import create_app
-from rav2.models import db
+from events import create_app
+from events.models import db
 
 with open(os.path.join(os.path.dirname(__file__), "data.sql"), "rb") as f:
     _data_sql = f.read().decode("utf8")
