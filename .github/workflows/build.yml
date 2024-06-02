@@ -78,5 +78,5 @@ jobs:
           name: shish2k/events
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
-      - name: Announce Update
+      - name: Announce
         run: curl 'https://du.shish.io/update?name=shish2k/events&tag=latest'
