@@ -12,6 +12,7 @@ VOLUME /data
 EXPOSE 8000
 
 ENV PYTHONUNBUFFERED 1
+RUN apt update && apt install -y rsync && rm -rf /var/lib/apt/lists/*
 RUN /usr/local/bin/pip install --upgrade pip setuptools wheel
 COPY pyproject.toml /app/
 WORKDIR /app
