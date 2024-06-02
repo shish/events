@@ -16,21 +16,23 @@ A built-in browser in the IDE should open automatically, with hot-reloading conf
 
 Slowstart
 =========
-Build frontend:
----------------
-```
-cd frontend
-npm install
-npm run dev    # for debugging
-npm run build  # for prod
-```
-
-Backend:
---------
+Install:
 ```
 python3 -m venv venv
-./venv/bin/pip install -e '.[dev]'
-./venv/bin/flask --app backend.app init-db  # create a database with example data
-./venv/bin/flask --app backend.app run --port 8000 --debug            # for debugging
-./venv/bin/gunicorn -w 4 'backend.app:create_app()' -b 0.0.0.0:8000   # for prod
+source venv/bin/activate
+pip install -e '.[dev]'
+flask --app events:create_app init-db
+```
+
+Run:
+```
+flask --app events:create_app --debug run
+```
+
+Test:
+```
+black .
+mypy events
+pytest
+ruff check events
 ```

@@ -1,0 +1,11 @@
+{% macro calendar(events) %}
+    <div class="calendar">
+        <ul>
+            {% for event in events %}
+                <li>
+                    {{ event.start_time }} - <a href="/event/{{ event.id }}">{{ event.title }}</a>
+                </li>
+            {% endfor %}
+        </ul>
+    </div>
+{% endmacro %}

@@ -1,0 +1,24 @@
+{% extends "_standard.html" %}
+{% from 'parts/calendar.html' import calendar %}
+
+{% block title %}{{ display_user.username }}'s Page - Events Index{% endblock %}
+{% block header %}{{ display_user.username }}'s Page{% endblock %}
+{% block id %}user{% endblock %}
+
+{% block article %}
+	{% if display_user == user: %}
+		<section id="settings">
+			<h3>Settings</h3>
+			{% include 'parts/user_settings.html' %}
+		</section>
+		<section id="calendar">
+			<h3>My Events</h3>
+			{{ calendar(display_user.events) }}
+		</section>
+	{% else %}
+		<section id="user">
+			<h3>User</h3>
+			{{ display_user.username }}
+		</section>
+	{% endif %}
+{% endblock %}

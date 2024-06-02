@@ -1,30 +1,21 @@
 {
-	"name": "Event Index",
+	"name": "Events Index",
 	"build": {
 		"context": "..",
-		"dockerfile": "Dockerfile"
-	},
-
-	"portsAttributes": {
-		"5173": {
-			"label": "Application",
-			"onAutoForward": "openPreview"
-		}
-	},
-	"otherPortsAttributes": {
-		"onAutoForward": "silent"
+		"dockerfile": "../Dockerfile"
 	},
 
 	"updateContentCommand": {
-		"backend": "python3 -m venv venv && venv/bin/pip install -e '.[dev]' && venv/bin/python3 -m backend.models",
-		"frontend": "cd frontend && npm install"
+		"backend": "pip install -e '.[dev]'"
 	},
+
 	"customizations": {
 		"vscode": {
 			"extensions": [
 				"ms-azuretools.vscode-docker",
+				"ms-vscode.makefile-tools",
 				"ms-python.python",
-				"ms-python.vscode-pylance"
+				"samuelcolvin.jinjahtml"
 			]
 		}
 	}

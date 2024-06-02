@@ -1,0 +1,15 @@
+<form hx-action="/user/{{ user.name }}" hx-method="POST">
+    <table class="form">
+        <tr>
+            <td>User message:</td>
+            <td><textarea name="message" rows="4" cols="50">{{ user.message }}</textarea></td>
+        </tr>
+        <tr>
+            <td>Email</td>
+            <td><input type="text" name="email" value="{{ user.email }}"></td>
+        </tr>
+        <tr>
+            <td colspan="2"><input type="submit" value="Set"></td>
+        </td>
+    </table>
+</form>

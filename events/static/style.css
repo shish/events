@@ -1,0 +1,80 @@
+* {box-sizing: border-box;}
+BODY {
+	background: #EEE;
+	display: grid;
+	grid-template:
+		"header " auto
+		"toast  " auto
+		"article" 1fr
+		"footer " auto
+		/ auto;
+	min-height: 100vh;
+	margin: 0px;
+}
+
+HEADER {
+	grid-area: header;
+	background: #BBB;
+
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 1em;
+
+	& H1 {
+		margin: 0px;
+	}
+	& #session {
+		& FORM {
+			margin: 0px;
+		}
+	}
+}
+#toast {
+	grid-area: toast;
+	background: #DAA;
+	padding: 1em;
+}
+ARTICLE {
+	grid-area: article;
+
+	display: grid;
+	column-gap: 1em;
+	padding: 1em;
+}
+FOOTER {
+	padding: 1em;
+	grid-area: footer;
+	background: #BBB;
+}
+
+ARTICLE#index {
+	grid-template:
+		"login      calendar" auto
+		".          calendar" auto
+		/ 250px auto;
+	& SECTION#login {grid-area: login;}
+	& SECTION#create {grid-area: create;}
+	& SECTION#calendar {grid-area: calendar;}
+}
+
+ARTICLE#user {
+	grid-template:
+		"navigation settings" auto
+		"upload     settings" auto
+		"avatars    avatars " auto
+		/ 1fr 1fr;
+	& SECTION#upload {grid-area: upload;}
+	& SECTION#settings {grid-area: settings;}
+	& SECTION#avatars {grid-area: avatars;}
+}
+
+#login TD {
+	text-align: center;
+}
+#login INPUT {
+	width: 100%;
+}
+.form INPUT {
+	width: 100%;
+}

@@ -1,0 +1,33 @@
+{% extends "_standard.html" %}
+{% from 'parts/calendar.html' import calendar %}
+
+{% block title %}Events Index{% endblock %}
+{% block header %}Events Index{% endblock %}
+{% block id %}index{% endblock %}
+
+{% block article %}
+{% if user: %}
+	<section id="login">
+		<h3>Logged In</h3>
+		Logged in as {{ user.username }}
+		<br><a href="/user">Settings</a> | <a hx-delete="/session/">Log Out</a>	
+	</section>
+{% else: %}
+	<section id="login">
+		<h3>Create Account</h3>
+		<form action="/user" method="POST">
+			<table id="login">
+				<tr><td>Username</td><td><input type="text" name="username"></td></tr>
+				<tr><td>Password</td><td><input type="password" name="password1"></td></tr>
+				<tr><td>Repeat</td><td><input type="password" name="password2"></td></tr>
+				<tr><td>Email</td><td><input type="text" name="email"></td></tr>
+				<tr><td colspan="2"><input type="submit" hx-target="#login" value="Create"></td></tr>
+			</table>
+		</form>
+	</section>
+{% endif %}
+	<section id="calendar">
+		<h3>Calendar</h3>
+		{{ calendar(events) }}
+	</section>
+{% endblock %}
