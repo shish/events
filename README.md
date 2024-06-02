@@ -1,6 +1,5 @@
 Events Index
 ============
-
 I want to know about events that are relevant to my interests, and have them automatically added to my google calendar
 
 Quickstart:
