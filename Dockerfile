@@ -1,4 +1,4 @@
-FROM python:3.12-slim
+FROM python:3.14-slim
 EXPOSE 8642
 VOLUME /data
 ENV PYTHONUNBUFFERED 1
