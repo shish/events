@@ -15,7 +15,7 @@ dependencies = [
     "bcrypt",
 ]
 
-[project.optional-dependencies]
+[dependency-groups]
 dev = [
     "black",
     "ruff",
