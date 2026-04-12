@@ -36,7 +36,8 @@ def index() -> str:
     events = db.session.execute(
         select(m.Event)
         # .where(Event.end_time > func.now())
-        .order_by(m.Event.start_time).limit(100)
+        .order_by(m.Event.start_time)
+        .limit(100)
     ).scalars()
     return render_template(
         "index.html",
@@ -147,7 +148,7 @@ def session_create():
         return hx_redirect(url_for("user_read", username=username))
     else:
         app.logger.info(f"login failed from {request.remote_addr}")
-        return hx_err("Invalid username or password")
+        return hx_err(400, "Invalid username or password")
 
 
 @app.route("/session", methods=["DELETE"])

@@ -28,8 +28,8 @@ uv run flask --app events:create_app --debug run
 
 Test:
 ```
-uv run black .
-uv run mypy events
+uv run ruff check
+uv run ruff format
+uv run ty check
 uv run pytest
-uv run ruff check events
 ```

@@ -17,9 +17,8 @@ dependencies = [
 
 [dependency-groups]
 dev = [
-    "black",
     "ruff",
-    "mypy",
+    "ty",
     "pytest-cov",
 ]
 
@@ -32,28 +31,8 @@ addopts = "--cov --cov-report term-missing --cov-fail-under 20"
 [tool.coverage.run]
 source = ["events"]
 
-[tool.black]
+[tool.ruff]
 line-length = 88
-target-version = ['py314']
-extend-exclude = '''
-/(
-  | venv
-)/
-'''
-
-[tool.isort]
-profile = "black"
-
-[tool.mypy]
-files = "events"
-
-[[tool.mypy.overrides]]
-module = "flask_htmx.*"
-ignore_missing_imports = true
-
-[[tool.mypy.overrides]]
-module = "icalendar.*"
-ignore_missing_imports = true
 
 [tool.ruff.lint]
 ignore = [

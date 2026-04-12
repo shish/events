@@ -1,5 +1,6 @@
 import os
 import tempfile
+import typing as t
 
 import pytest
 import sqlite3
@@ -35,7 +36,7 @@ def app():
 
 
 @pytest.fixture
-def client(app: Flask) -> FlaskClient:
+def client(app: Flask) -> t.Generator[FlaskClient, None, None]:
     with app.app_context():
         with app.test_client() as c:
             c.get("/")
@@ -43,7 +44,7 @@ def client(app: Flask) -> FlaskClient:
 
 
 @pytest.fixture
-def user_client(client: FlaskClient) -> FlaskClient:
+def user_client(client: FlaskClient) -> t.Generator[FlaskClient, None, None]:
     client.post("/login", data={"username": "test", "password": "test"})
     yield client
 

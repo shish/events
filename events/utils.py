@@ -1,17 +1,17 @@
-from flask_htmx import HTMX, make_response
-from flask import Response, session, g, redirect, url_for
 import functools
 
-from .models import db
+from flask import Response, g, redirect, session, url_for
+from flask_htmx import HTMX, make_response
+
 from . import models as m
 from .app import app
-
+from .models import db
 
 htmx = HTMX()
 
 
 def hx_err(code: int, msg: str) -> Response:
-    return make_response(msg, status=code, retarget="#toast")
+    return make_response(msg, code, retarget="#toast")
 
 
 def hx_redirect(location: str) -> Response:
